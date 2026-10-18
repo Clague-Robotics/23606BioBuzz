@@ -17,4 +17,14 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.1'
     implementation 'com.pedropathing:tuning:1.0.1'
+
+    dependencies {
+        // ... existing dependencies ...
+        implementation 'com.acmerobotics.dashboard:dashboard:0.4.16'
+    }
+
+}
+repositories {
+    // ... existing repositories ...
+    maven { url = 'https://maven.brott.dev/' }
 }

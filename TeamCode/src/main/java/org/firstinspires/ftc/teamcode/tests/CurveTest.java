@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.tests;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
@@ -38,7 +38,7 @@ public class CurveTest extends LinearOpMode {
         // 5. Pedro only moves if you call update() over and over
         while (opModeIsActive() && !follower.atParametricEnd()) {
             follower.update();
-            telemetry.addData("Pose", follower.getPose());
+            telemetry.addData("Pose", follower.pose());
             telemetry.update();
         }
     }

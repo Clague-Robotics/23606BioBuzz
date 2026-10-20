@@ -6,7 +6,7 @@ import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.pedro.ProgrammingBotConstants;
 
 import static com.pedropathing.api.Paths.curve;
 
@@ -16,7 +16,7 @@ public class CurveTest extends LinearOpMode {
     @Override
     public void runOpMode() {
         // 1. SET UP: build the Follower (the part of Pedro that drives the robot)
-        Follower follower = Constants.create(hardwareMap);
+        Follower follower = ProgrammingBotConstants.create(hardwareMap);
 
         // 2. Tell Pedro where the robot starts (inches). Pose = x, y.
         Pose start = new Pose(0, 0);

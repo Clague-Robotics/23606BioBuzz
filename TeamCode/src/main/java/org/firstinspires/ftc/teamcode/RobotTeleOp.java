@@ -13,6 +13,24 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.pedro.ProgrammingBotConstants;
 
+// Ascii Field Depiction For refrence
+/////////////////////////////////////////////////////////
+////                                                 ////
+////                                                 ////
+////                                                 ////
+////              |-----------------|                ////
+////              |-----------------|                ////
+////              |     Red Hive    |                ////
+////              |-----------------|                ////
+////   North                              South      ////
+////              |-----------------|                ////
+////              |     Blue Hive   |                ////
+////              |-----------------|                ////
+////                                                 ////
+////  (Right in the corner)                          ////
+////  (o, o)                                         ////
+////XX                                               ////
+/////////////////////////////////////////////////////////
 enum DriveType {
     FIELD_ORIENTED,
     BOT_ORIENTED
@@ -29,20 +47,34 @@ enum FieldLocation {
 public class RobotTeleOp extends OpMode {
     private Follower follower;
     private DriveType driveType;
+    private volatile Pose startingPos = new Pose(0, 0);
 
-    void goTo(Follower follower, FieldLocation location) {
+    void goTo(Pose pose) {
+        try {
+            Path path = line(
+                    follower.pose(),
+                    pose
+            ).tangent();
+
+            follower.follow(path);
+        } catch (Exception ignored) { }
+    }
+    void goTo(FieldLocation location) {
         switch (location) {
             case ZERO_ZERO:
-                try {
-                    Path path = line(
-                            follower.pose(),
-                            new Pose(0, 0, 0)
-                    ).tangent();
-
-                    if (gamepad1.right_bumper) {
-                        follower.follow(path);
-                    }
-                } catch (Exception ignored) { }
+                goTo(new Pose(0, 0));
+                break;
+            case BLUE_HIVE_NORTH:
+                goTo(new Pose(50, -5));
+                break;
+            case RED_HIVE_NORTH:
+                goTo(new Pose(70, -5));
+                break;
+            case BLUE_HIVE_SOUTH:
+                goTo(new Pose(50, -115));
+                break;
+            case RED_HIVE_SOUTH:
+                new Pose(70, -115);
                 break;
             default:
                 telemetry.addData("Error", "Don't know that location");
@@ -53,7 +85,7 @@ public class RobotTeleOp extends OpMode {
     public void init() {
         follower = ProgrammingBotConstants.create(hardwareMap);
         driveType = DriveType.FIELD_ORIENTED;
-        follower.setPose(new Pose(0, 0, 0));
+        follower.setPose(startingPos);
     }
 
     @Override
@@ -79,7 +111,7 @@ public class RobotTeleOp extends OpMode {
 
             // Basic logic to go autonomously back to a given position.
             if (gamepad1.share) {
-                goTo(follower, FieldLocation.ZERO_ZERO);
+                goTo(FieldLocation.ZERO_ZERO);
             }
             if (gamepad1.touchpad_finger_1 && gamepad1.touchpad) {
                 double fingerX = gamepad1.touchpad_finger_1_x;
@@ -88,15 +120,15 @@ public class RobotTeleOp extends OpMode {
                 telemetry.addData("Finger 1 Y", fingerY);
                 if (fingerX > 0) { // BLUE
                     if (fingerY > 0) { // NORTH
-                        goTo(follower, FieldLocation.BLUE_HIVE_NORTH);
+                        goTo(FieldLocation.BLUE_HIVE_NORTH);
                     } else { // SOUTH
-                        goTo(follower, FieldLocation.BLUE_HIVE_SOUTH);
+                        goTo(FieldLocation.BLUE_HIVE_SOUTH);
                     }
                 } else { // RED
                     if (fingerY > 0) { // NORTH
-                        goTo(follower, FieldLocation.RED_HIVE_NORTH);
+                        goTo(FieldLocation.RED_HIVE_NORTH);
                     } else { // SOUTH
-                        goTo(follower, FieldLocation.RED_HIVE_SOUTH);
+                        goTo(FieldLocation.RED_HIVE_SOUTH);
                     }
                 }
             }

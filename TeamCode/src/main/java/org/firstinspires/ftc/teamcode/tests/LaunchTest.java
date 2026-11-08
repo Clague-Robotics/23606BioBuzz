@@ -18,17 +18,20 @@ public class LaunchTest extends LinearOpMode {
 
         waitForStart();
         while (opModeIsActive()) {
-            if (gamepad1.rightBumperWasReleased()) isLaunching = !isLaunching;
-            isKicking = gamepad1.left_bumper;
+            if (gamepad1.xWasReleased()) isLaunching = !isLaunching;
+            isKicking = gamepad1.right_trigger > 0.5;
             isIntaking = gamepad1.left_trigger > 0.5;
 
             kicker.setPower(isKicking ? -1 : 0.3);
             intake.setPower(isIntaking ? 1 : 0);
-            launcher.setPower(isLaunching ? -0.6 : 0);
+            launcher.setPower(isLaunching ? 0.6 : 0);
 
             telemetry.addData("Is Launching", isLaunching);
             telemetry.addData("Is Kicking", isKicking);
             telemetry.addData("Is Intaking", isIntaking);
+
+            telemetry.addData("Motor Info","");
+            telemetry.addData("Intake Motor Speed", intake.getPower());
             telemetry.update();
         }
     }

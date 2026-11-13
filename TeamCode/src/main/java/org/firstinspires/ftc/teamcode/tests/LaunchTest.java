@@ -6,19 +6,21 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 import java.util.ArrayList;
 
+import org.firstinspires.ftc.teamcode.*;
 @TeleOp(name = "Motor Launch Test")
 public class LaunchTest extends LinearOpMode {
     public void runOpMode() {
-        DcMotor launcher = hardwareMap.get(DcMotor.class, "MotorLauncher");
+        LaunchController controller = new LaunchController(hardwareMap); // ./gradlew doesn't fail on this, ide display error.
+        /*DcMotor launcher = hardwareMap.get(DcMotor.class, "MotorLauncher");
         DcMotor kicker = hardwareMap.get(DcMotor.class, "MotorKicker");
         DcMotor intake = hardwareMap.get(DcMotor.class, "MotorIntake");
         boolean isLaunching = false;
         boolean isKicking = false;
-        boolean isIntaking = false;
+        boolean isIntaking = false;*/
 
         waitForStart();
         while (opModeIsActive()) {
-            if (gamepad1.xWasReleased()) isLaunching = !isLaunching;
+            /*if (gamepad1.xWasReleased()) isLaunching = !isLaunching;
             isKicking = gamepad1.right_trigger > 0.5;
             isIntaking = gamepad1.left_trigger > 0.5;
 
@@ -31,7 +33,11 @@ public class LaunchTest extends LinearOpMode {
             telemetry.addData("Is Intaking", isIntaking);
 
             telemetry.addData("Motor Info","");
-            telemetry.addData("Intake Motor Speed", intake.getPower());
+            telemetry.addData("Intake Motor Speed", intake.getPower()); */
+
+            controller.updateInput(gamepad1.right_trigger > 0.5, gamepad1.left_trigger > 0.5, gamepad1.xWasReleased(), gamepad1.dpadUpWasReleased(), gamepad1.dpadDownWasPressed());
+            controller.debugPrint(telemetry);
+            controller.tick();
             telemetry.update();
         }
     }

@@ -11,7 +11,7 @@ import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.pedro.ProgrammingBotConstants;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 // Ascii Field Depiction For refrence
 /////////////////////////////////////////////////////////
@@ -47,6 +47,7 @@ enum FieldLocation {
 public class RobotTeleOp extends OpMode {
     private Follower follower;
     private DriveType driveType;
+    private LaunchController launchController;
     private volatile Pose startingPos = new Pose(0, 0);
 
     void goTo(Pose pose) {
@@ -83,7 +84,8 @@ public class RobotTeleOp extends OpMode {
     }
     @Override
     public void init() {
-        follower = ProgrammingBotConstants.create(hardwareMap);
+        follower = Constants.create(hardwareMap);
+        launchController = new LaunchController(hardwareMap);
         driveType = DriveType.FIELD_ORIENTED;
         follower.setPose(startingPos);
     }
@@ -93,7 +95,7 @@ public class RobotTeleOp extends OpMode {
         // A try catch statement so that any error made won't end the OpMode.
         try {
             // Switch bot movement mode
-            if (gamepad1.optionsWasReleased()) {
+            if (gamepad1.leftStickButtonWasPressed()) {
                 if (follower.isBusy()) {
                     follower.stop();
                 } else {
@@ -110,8 +112,8 @@ public class RobotTeleOp extends OpMode {
             }
 
             // Basic logic to go autonomously back to a given position.
-            if (gamepad1.share) {
-                goTo(FieldLocation.ZERO_ZERO);
+            if (gamepad1.startWasReleased()) {
+                follower.setPose(new Pose(0, 0, 0));
             }
             if (gamepad1.touchpad_finger_1 && gamepad1.touchpad) {
                 double fingerX = gamepad1.touchpad_finger_1_x;
@@ -166,6 +168,12 @@ public class RobotTeleOp extends OpMode {
             } else {
                 telemetry.addData("Drive Mode", "Autonomous");
             }
+
+            // Implement launch + intake
+            launchController.updateInput(gamepad2.right_trigger > 0.5, gamepad2.left_trigger > 0.5, gamepad2.xWasPressed(), gamepad2.dpadUpWasReleased(), gamepad2.dpadUpWasReleased());
+            launchController.debugPrint(telemetry);
+            launchController.tick();
+
             telemetry.addData("Bot Position X", follower.pose().x());
             telemetry.addData("Bot Position Y", follower.pose().y());
             follower.update();

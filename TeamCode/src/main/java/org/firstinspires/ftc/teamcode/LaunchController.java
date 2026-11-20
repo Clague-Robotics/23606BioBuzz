@@ -14,6 +14,8 @@ public class LaunchController {
 
     private boolean isIntaking = false;
     private boolean isKicking = false;
+    private boolean intakeReversing = false;
+    private boolean kickerReversing = false;
     private boolean isLaunching = false;
     private boolean lastLaunchButtonState = false;
 
@@ -22,7 +24,7 @@ public class LaunchController {
     public static class LaunchConfig {
         // Motor & Target Specs (goBILDA 5203 6000 RPM)
         public double ticksPerRevolution = 28.0;
-        public double targetLaunchRPM = 2_500.0;
+        public double targetLaunchRPM = 2_400.0;
 
         // PIDF Gains for Velocity Control
         public double kP = 13.0;
@@ -36,6 +38,8 @@ public class LaunchController {
 
         public float kickingSpeedOff = 0.0f;
         public float intakingSpeedOff = 0.0f;
+        public float intakeSpeedReverse = -1;
+        public float kickingSpeedReverse = -1;
 
         // Motor Directions
         public DcMotorSimple.Direction launchingDirection = DcMotorSimple.Direction.FORWARD;
@@ -96,7 +100,7 @@ public class LaunchController {
         this.isLaunching = isLaunching;
     }
 
-    public void updateInput(boolean intakeHeld, boolean kickingHeld, boolean launchToggleButton, boolean addToSpeed, boolean removeToSpeed) {
+    public void updateInput(boolean intakeHeld, boolean kickingHeld, boolean launchToggleButton, boolean intakeReverse, boolean kickingReverse, boolean addToSpeed, boolean removeToSpeed) {
         // Only toggle isLaunching on the exact frame the button is pressed down
         if (launchToggleButton && !lastLaunchButtonState) {
             isLaunching = !isLaunching;
@@ -107,10 +111,13 @@ public class LaunchController {
         this.isKicking = kickingHeld;
 
         double add = 0;
-        if (addToSpeed) add += launchConfig.ticksPerRevolution * 5;
-        if (removeToSpeed) add -= launchConfig.ticksPerRevolution * 5;
+        if (addToSpeed) add += (100 * launchConfig.ticksPerRevolution) / 60.0;
+        if (removeToSpeed) add -= (100 * launchConfig.ticksPerRevolution) / 60.0;
 
         this.aimTPS += add;
+
+        this.intakeReversing = intakeReverse;
+        this.kickerReversing = kickingReverse;
     }
 
     public boolean isAtTargetSpeed(double toleranceTPS) {
@@ -138,10 +145,14 @@ public class LaunchController {
 
         // Set Intake power
         float intakePower = isIntaking ? launchConfig.intakingSpeedOn : launchConfig.intakingSpeedOff;
+        intakePower = intakeReversing ? launchConfig.intakeSpeedReverse : intakePower;
+
         intake.setPower(intakePower);
 
         // Set Kicker power
         float kickerPower = isKicking ? launchConfig.kickingSpeedOn : launchConfig.kickingSpeedOff;
+        kickerPower = intakeReversing ? launchConfig.kickingSpeedReverse : kickerPower;
+
         kicker.setPower(kickerPower);
 
         // Set Launch velocity using internal PIDF

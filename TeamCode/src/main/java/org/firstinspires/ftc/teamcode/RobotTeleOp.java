@@ -170,7 +170,7 @@ public class RobotTeleOp extends OpMode {
             }
 
             // Implement launch + intake
-            launchController.updateInput(gamepad2.right_trigger > 0.5, gamepad2.left_trigger > 0.5, gamepad2.xWasPressed(), gamepad2.dpadUpWasReleased(), gamepad2.dpadUpWasReleased());
+            launchController.updateInput(gamepad2.right_trigger > 0.5, gamepad2.left_trigger > 0.5, gamepad2.xWasPressed(), gamepad1.right_bumper, gamepad1.left_bumper, gamepad2.dpadUpWasReleased(), gamepad2.dpadDownWasReleased());
             launchController.debugPrint(telemetry);
             launchController.tick();
 

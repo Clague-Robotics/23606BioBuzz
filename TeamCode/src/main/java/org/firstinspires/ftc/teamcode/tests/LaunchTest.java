@@ -35,7 +35,7 @@ public class LaunchTest extends LinearOpMode {
             telemetry.addData("Motor Info","");
             telemetry.addData("Intake Motor Speed", intake.getPower()); */
 
-            controller.updateInput(gamepad1.right_trigger > 0.5, gamepad1.left_trigger > 0.5, gamepad1.xWasReleased(), gamepad1.dpadUpWasReleased(), gamepad1.dpadDownWasPressed());
+            controller.updateInput(gamepad1.right_trigger > 0.5, gamepad1.left_trigger > 0.5, gamepad1.xWasReleased(), gamepad1.right_bumper, gamepad1.left_bumper, gamepad1.dpadUpWasReleased(), gamepad1.dpadDownWasPressed());
             controller.debugPrint(telemetry);
             controller.tick();
             telemetry.update();

@@ -17,6 +17,17 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
+
+    // Foresight-tuned controller gains, kept as named constants so other simple
+    // controllers can auto-populate from the values ForesightTuner produced.
+    // Translational gains are power per inch of error; the heading gain is power per radian.
+    public static final double PRIMARY_TRANSLATIONAL_FORWARD_KP = 0.4786413209086717;
+    public static final double SECONDARY_TRANSLATIONAL_FORWARD_KP = 0.17684517854411133;
+    public static final double PRIMARY_TRANSLATIONAL_LATERAL_KP = 0.5844632115717816;
+    public static final double SECONDARY_TRANSLATIONAL_LATERAL_KP = 0.21594353953113501;
+    public static final double HEADING_KP = 5.0555743617793585;
+    public static final double TRANSLATIONAL_BREAKPOINT_IN = 2.5;
+
     public static Follower create(HardwareMap h) {
         return new Follower(
                 new PinpointLocalizer(h, localizerConfig),
@@ -26,18 +37,18 @@ public class Constants {
 
     public static ForesightConfig foresightConfig = new ForesightConfig(
             c -> {
-                Controller primaryTranslationalForward = Controller.proportional(0.4786413209086717);
-                Controller secondaryTranslationalForward = Controller.proportional(0.17684517854411133);
-                Controller primaryTranslationalLateral = Controller.proportional(0.5844632115717816);
-                Controller secondaryTranslationalLateral = Controller.proportional(0.21594353953113501);
+                Controller primaryTranslationalForward = Controller.proportional(PRIMARY_TRANSLATIONAL_FORWARD_KP);
+                Controller secondaryTranslationalForward = Controller.proportional(SECONDARY_TRANSLATIONAL_FORWARD_KP);
+                Controller primaryTranslationalLateral = Controller.proportional(PRIMARY_TRANSLATIONAL_LATERAL_KP);
+                Controller secondaryTranslationalLateral = Controller.proportional(SECONDARY_TRANSLATIONAL_LATERAL_KP);
 
-                c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
-                c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
+                c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(TRANSLATIONAL_BREAKPOINT_IN, primaryTranslationalForward));
+                c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(TRANSLATIONAL_BREAKPOINT_IN, primaryTranslationalLateral));
 
                 c.coast.set(Controller.proportionalFeedforward(0.01842031457007383));
                 c.brake.set(Controller.proportionalFeedforward(0.015657267384562752));
 
-                c.headingFeedback.set(Controller.proportional(5.0555743617793585));
+                c.headingFeedback.set(Controller.proportional(HEADING_KP));
                 c.headingBrakeCoefficients.set(Vector2D.cartesian(0.051366369975103396, 0.009675248886029239));
 
                 c.linearBrakeCoefficients.set(Matrix.diag(0.09593291226461254, 0.08929236878691171));
@@ -52,9 +63,9 @@ public class Constants {
     public static PinpointConfig localizerConfig = new PinpointConfig(c -> {
         c.name.set("pinpoint");
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        c.xPodOffset.set(-1.4450288006639858);
-        c.yPodOffset.set(0.012187296011316495);
-        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        c.xPodOffset.set(-4.724);
+        c.yPodOffset.set(2.756);
+        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);
         c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
         c.globalDistanceUnit.set(DistanceUnit.INCH);
         c.offsetUnits.set(DistanceUnit.INCH);
@@ -64,9 +75,9 @@ public class Constants {
         c.frontRightName.set("MotorFR");
         c.backLeftName.set("MotorBL");
         c.backRightName.set("MotorBR");
-        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.frontRightDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.backRightDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.frontLeftDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
     });
 }

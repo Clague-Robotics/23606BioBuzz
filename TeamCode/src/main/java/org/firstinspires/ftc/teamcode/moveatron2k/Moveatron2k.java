@@ -229,39 +229,45 @@ public class Moveatron2k {
     }
 
     /**
-     * Manual drive path: applies the given powers straight to the drivetrain —
+     * Manual drive path: applies the given axes straight to the drivetrain —
      * no point-to-point controller, no target set, {@link #tick()} still no-ops.
-     * The axes are interpreted in the frame the {@link MoveType} names; for
-     * {@link MoveType#FieldCentric} the world-frame powers are rotated into the
-     * body frame against the bot's CURRENT heading (fresh Pinpoint read) each
-     * call, so pushing +forward always drives toward the frame's x-axis no
-     * matter which way the bot has since rotated.
+     * For {@link MoveType#FieldCentric} the axes are in the Moveatron2k frame
+     * (world: +forward = the init/setPosition x-axis, +strafe = its left, +turn
+     * = CCW) and get rotated into the body frame against the bot's CURRENT
+     * heading (fresh Pinpoint read) each call, so pushing forward always drives
+     * toward the frame's x-axis no matter which way the bot has since rotated.
+     * For {@link MoveType#BotCentric} the axes already are the bot's body frame
+     * (+forward = nose, +strafe = left) and pass through.
      *
      * Does NOTHING while the bot is busy with a {@link #goTo} move (i.e.
      * {@link #isBusy()} is true): the closed-loop move owns the wheels until it
      * finishes inside tolerance (its own tick) or {@link #cancel()} clears it.
      *
-     * @param moveType which frame the powers are expressed in
-     * @param powers   +forward = nose, +strafe = left, turn: + = CCW as seen
-     *                 from above (physical convention — the closed loop's
-     *                 {@link Config#reverseRotation} compensation is goTo's
-     *                 business, not the driver's)
+     * @param moveType which frame the axes are expressed in
+     * @param forward  forward power
+     * @param strafe   left power
+     * @param turn     + = CCW as seen from above (physical convention — the
+     *                 closed loop's {@link Config#reverseRotation} compensation
+     *                 is goTo's business, not the driver's)
      */
-    public void manual(MoveType moveType, DrivePowers powers) {
+    public void manual(MoveType moveType, double forward, double strafe, double turn) {
         if (busy) {
             return;
         }
 
         switch (moveType) {
-            case FieldCentric:
-                drivetrain.applyDrive(FieldCentricDrive.drive(
-                        powers.forward(), powers.strafe(), powers.turn(),
-                        Math.toRadians(currentPose().headingDeg)));
+            case FieldCentric: {
+                double headingRad = Math.toRadians(currentPose().headingDeg);
+                double cos = Math.cos(headingRad);
+                double sin = Math.sin(headingRad);
+                double bodyForward = forward * cos + strafe * sin;
+                double bodyStrafe = -forward * sin + strafe * cos;
+                drivetrain.applyDrive(new DrivePowers(bodyForward, bodyStrafe, turn));
                 break;
+            }
             case BotCentric:
             default:
-                drivetrain.applyDrive(BotCentricDrive.drive(
-                        powers.forward(), powers.strafe(), powers.turn()));
+                drivetrain.applyDrive(new DrivePowers(forward, strafe, turn));
                 break;
         }
     }

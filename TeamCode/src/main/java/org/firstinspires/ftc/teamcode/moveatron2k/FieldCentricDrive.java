@@ -1,35 +1,49 @@
 package org.firstinspires.ftc.teamcode.moveatron2k;
 
-import com.pedropathing.drivetrain.DrivePowers;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
- * Basic field-centric manual drive: the requested motion axes are in the
- * {@link Moveatron2k} world frame — +x ("forward") = the direction the bot
- * faced at init (or wherever {@link Moveatron2k#setPosition} redefined the
- * frame's x-axis), +y ("strafe") = 90° CCW off that, +turn = CCW — and get
- * rotated into the bot's body frame against its current heading before the
- * mecanum mixer can use them.
+ * Manual field-centric teleop on the Moveatron2k mecanum driver.
  *
- * Same rotation as Moveatron2k's world→body error mapping in reverse:
- * body = R(-heading) · world, strafe positive left.
+ * The left stick is the move direction in the Moveatron2k frame — straight up
+ * ALWAYS drives toward the direction the bot faced at OpMode init (or wherever
+ * {@link Moveatron2k#setPosition} redefined the frame), regardless of the bot's
+ * current heading. {@link Moveatron2k#manual} reads the Pinpoint and rotates the
+ * axes into the body frame every loop. Right stick turns (+: CCW from above).
+ *
+ * Stick mapping (+strafe = left, +turn = CCW from above, matching
+ * {@link Moveatron2k#manual}): left stick up = forward, left stick right =
+ * strafe right (i.e. -left), right stick right = turn clockwise.
  */
-public final class FieldCentricDrive {
+@TeleOp(name = "Moveatron2k Field-Centric")
+public class FieldCentricDrive extends OpMode {
 
-    private FieldCentricDrive() {}
+    private Moveatron2k moveatron;
 
-    /**
-     * @param forwardPow world-frame x-axis power (+ = the frame's 0° direction)
-     * @param strafePow  world-frame left power
-     * @param turn       turn power, frame-independent (+ = CCW), passed through
-     * @param headingRad the bot's current heading in the Moveatron2k frame
-     *                   (CCW-positive, as {@link Moveatron2k.Position#headingDeg})
-     * @return body-frame powers for the mecanum drivetrain
-     */
-    public static DrivePowers drive(double forward, double strafe, double turn, double headingRad) {
-        double cos = Math.cos(headingRad);
-        double sin = Math.sin(headingRad);
-        double bodyForward = forward * cos + strafe * sin;
-        double bodyStrafe = -forward * sin + strafe * cos;
-        return new DrivePowers(bodyForward, bodyStrafe, turn);
+    @Override
+    public void init() {
+        moveatron = new Moveatron2k(hardwareMap);
+        telemetry.addLine("Field-centric: left stick = move toward frame axes, right stick = turn.");
+        telemetry.update();
+    }
+
+    @Override
+    public void loop() {
+        double forward = -gamepad1.left_stick_y;
+        double strafe = -gamepad1.left_stick_x;
+        double turn = -gamepad1.right_stick_x;
+
+        moveatron.manual(Moveatron2k.MoveType.FieldCentric, forward, strafe, turn);
+
+        Moveatron2k.Position pose = moveatron.getPosition();
+        telemetry.addData("Position", pose);
+        telemetry.addData("Busy", moveatron.isBusy());
+        telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        moveatron.cancel();
     }
 }

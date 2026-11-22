@@ -25,7 +25,8 @@ public class PIDTunerManual extends LinearOpMode {
                     gamepad1.left_bumper,        // Reverse intake
                     gamepad1.right_bumper,       // Reverse kicker
                     gamepad1.dpadUpWasReleased(),   // Increase speed
-                    gamepad1.dpadDownWasReleased()  // Decrease speed
+                    gamepad1.dpadDownWasReleased(),  // Decrease speed
+                    gamepad1.a // Smart launch
             );
 
             double multiplier = 0.01000;

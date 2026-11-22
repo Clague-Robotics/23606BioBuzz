@@ -18,6 +18,7 @@ public class LaunchController {
     private boolean kickerReversing = false;
     private boolean isLaunching = false;
     private boolean lastLaunchButtonState = false;
+    private boolean smartLaunch = false;
 
     private double aimTPS = 0;
     final LaunchConfig launchConfig;
@@ -118,7 +119,8 @@ public class LaunchController {
             boolean intakeReverse,
             boolean kickingReverse,
             boolean addToSpeed,
-            boolean removeToSpeed
+            boolean removeToSpeed,
+            boolean smartLaunch
     ) {
         // Toggle launcher only on the button's press edge.
         if (launchToggleButton && !lastLaunchButtonState) {
@@ -138,6 +140,8 @@ public class LaunchController {
         if (removeToSpeed) {
             aimTPS -= speedChangeTPS;
         }
+
+        this.smartLaunch = smartLaunch;
     }
 
     public boolean isAtTargetSpeed(double toleranceTPS) {
@@ -179,13 +183,21 @@ public class LaunchController {
         }
         intake.setPower(intakePower);
 
-        float kickerPower = isKicking
-                ? launchConfig.kickingSpeedOn
-                : launchConfig.kickingSpeedOff;
-        if (kickerReversing) {
-            kickerPower = launchConfig.kickingSpeedReverse;
+        if (smartLaunch) {
+            if (isAtTargetSpeed(50)) {
+                kicker.setPower(launchConfig.kickingSpeedOn);
+            } else {
+                kicker.setPower(launchConfig.kickingSpeedOff);
+            }
+        } else {
+            float kickerPower = isKicking
+                    ? launchConfig.kickingSpeedOn
+                    : launchConfig.kickingSpeedOff;
+            if (kickerReversing) {
+                kickerPower = launchConfig.kickingSpeedReverse;
+            }
+            kicker.setPower(kickerPower);
         }
-        kicker.setPower(kickerPower);
 
         if (isLaunching) {
             launch.setVelocity(aimTPS);

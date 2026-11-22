@@ -145,7 +145,7 @@ public class RobotTeleOp extends OpMode {
             if (!follower.isBusy()) { // Basic manual controls
                 double forward = -gamepad1.left_stick_y;
                 double lateral = -gamepad1.left_stick_x;
-                double turn = -gamepad1.right_stick_x;
+                double turn = gamepad1.right_stick_x;
                 boolean slow = gamepad1.b;
                 if (slow) {
                     forward *= 0.5;
@@ -177,7 +177,7 @@ public class RobotTeleOp extends OpMode {
             }
 
             // Implement launch + intake
-            launchController.updateInput(gamepad2.right_trigger > 0.5, gamepad2.left_trigger > 0.5, gamepad2.xWasPressed(), gamepad1.right_bumper, gamepad1.left_bumper, gamepad2.dpadUpWasReleased(), gamepad2.dpadDownWasReleased());
+            launchController.updateInput(gamepad2.right_trigger > 0.5, gamepad2.left_trigger > 0.5, gamepad2.xWasPressed(), gamepad1.right_bumper, gamepad1.left_bumper, gamepad2.dpadUpWasReleased(), gamepad2.dpadDownWasReleased(), gamepad2.a);
             launchController.debugPrint(telemetry);
             launchController.tick();
 

@@ -145,7 +145,7 @@ public class RobotTeleOp extends OpMode {
             if (!follower.isBusy()) { // Basic manual controls
                 double forward = -gamepad1.left_stick_y;
                 double lateral = -gamepad1.left_stick_x;
-                double turn = gamepad1.right_stick_x;
+                double turn = -gamepad1.right_stick_x;
                 boolean slow = gamepad1.b;
                 if (slow) {
                     forward *= 0.5;

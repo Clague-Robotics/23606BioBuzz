@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
  * Watch telemetry while it runs; if it never goes not-busy, the printed
  * distance/heading error says which channel isn't converging.
  */
-@Autonomous(name = "Moveatron2k Test")
-public class Moveatron2kTest extends LinearOpMode {
+@Autonomous(name = "Moveatron2k Follow Test")
+public class Moveatron2kFollowTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {

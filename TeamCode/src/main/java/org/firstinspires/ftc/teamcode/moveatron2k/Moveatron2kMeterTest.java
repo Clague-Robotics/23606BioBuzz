@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
  * Watch telemetry while it runs; if it never goes not-busy, the printed
  * distance/heading error says which channel isn't converging.
  */
-@Autonomous(name = "Moveatron2k Test")
-public class Moveatron2kTest extends LinearOpMode {
+@Autonomous(name = "Moveatron2k Meter Test")
+public class Moveatron2kMeterTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
@@ -21,55 +21,20 @@ public class Moveatron2kTest extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+        // Units: millimeters, heading in degrees.
+        moveatron.goTo(1000.0, 0.0, 90.0);
 
-        while (opModeIsActive()) {
-            // Units: millimeters, heading in degrees.
-            moveatron.goTo(0.0, 500.0, 90.0);
-
-            while (opModeIsActive() && moveatron.isBusy()) {
-                moveatron.tick();
-                telemetry.addData("Position X (mm)", moveatron.getPosition().xMm);
-                telemetry.addData("Position Y (mm)", moveatron.getPosition().yMm);
-                telemetry.addData("Distance error (mm)", "%.1f", moveatron.distanceErrorMm());
-                telemetry.addData("Heading error (deg)", "%.1f", moveatron.headingErrorDeg());
-                telemetry.addData("Busy", moveatron.isBusy());
-                telemetry.update();
-            }
-            moveatron.cancel();
-            telemetry.addLine("Done. Heading to the next position.");
+        while (opModeIsActive() && moveatron.isBusy()) {
+            moveatron.tick();
+            telemetry.addData("Position X (mm)", moveatron.getPosition().xMm);
+            telemetry.addData("Position Y (mm)", moveatron.getPosition().yMm);
+            telemetry.addData("Distance error (mm)", "%.1f", moveatron.distanceErrorMm());
+            telemetry.addData("Heading error (deg)", "%.1f", moveatron.headingErrorDeg());
+            telemetry.addData("Busy", moveatron.isBusy());
             telemetry.update();
-
-            sleep(500);
-
-            moveatron.goTo(500.0, 200.0, 270.0);
-
-            while (opModeIsActive() && moveatron.isBusy()) {
-                moveatron.tick();
-                telemetry.addData("Position X (mm)", moveatron.getPosition().xMm);
-                telemetry.addData("Position Y (mm)", moveatron.getPosition().yMm);
-                telemetry.addData("Distance error (mm)", "%.1f", moveatron.distanceErrorMm());
-                telemetry.addData("Heading error (deg)", "%.1f", moveatron.headingErrorDeg());
-                telemetry.addData("Busy", moveatron.isBusy());
-                telemetry.update();
-            }
-            sleep(1000);
-
-            moveatron.goTo(0.0, 0.0, 90.0);
-
-            while (opModeIsActive() && moveatron.isBusy()) {
-                moveatron.tick();
-                telemetry.addData("Position X (mm)", moveatron.getPosition().xMm);
-                telemetry.addData("Position Y (mm)", moveatron.getPosition().yMm);
-                telemetry.addData("Distance error (mm)", "%.1f", moveatron.distanceErrorMm());
-                telemetry.addData("Heading error (deg)", "%.1f", moveatron.headingErrorDeg());
-                telemetry.addData("Busy", moveatron.isBusy());
-                telemetry.update();
-            }
-            moveatron.cancel();
-            telemetry.addLine("Done. Heading to the next position.");
-            telemetry.update();
-
-            sleep(500);
         }
+        moveatron.cancel();
+        telemetry.addLine("Done. Heading to the next position.");
+        telemetry.update();
     }
 }

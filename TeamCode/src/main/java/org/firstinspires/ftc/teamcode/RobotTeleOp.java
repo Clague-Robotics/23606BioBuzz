@@ -10,6 +10,7 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
@@ -45,10 +46,12 @@ enum FieldLocation {
 }
 @TeleOp(name = "23606 BioBuzz TeleOp")
 public class RobotTeleOp extends OpMode {
+    private Servo flowerServo;
     private Follower follower;
     private DriveType driveType;
     private LaunchController launchController;
     private volatile Pose startingPos = new Pose(0, 0);
+    private boolean servoDown = false;
 
     void goTo(Pose pose) {
         try {
@@ -88,10 +91,14 @@ public class RobotTeleOp extends OpMode {
         launchController = new LaunchController(hardwareMap);
         driveType = DriveType.FIELD_ORIENTED;
         follower.setPose(startingPos);
+        flowerServo = hardwareMap.get(Servo.class, "ServoFlower");
     }
 
     @Override
     public void loop() {
+        // Servo
+        servoDown = gamepad2.yWasReleased() ? !servoDown : servoDown;
+        flowerServo.setPosition(servoDown ? 0.25 : 1);
         // A try catch statement so that any error made won't end the OpMode.
         try {
             // Switch bot movement mode

@@ -5,6 +5,7 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.revhub.drivetrains.Mecanum;
 import com.pedropathing.revhub.localizers.PinpointLocalizer;
 import com.pedropathing.utils.Angle;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
@@ -104,6 +105,15 @@ public class Moveatron2k {
          *  180° away and hovers with heading error pinned at the ±180° seam. */
         public boolean reverseRotation = true;
 
+        /** True = the drive motors' zero-power behavior is BRAKE: when the
+         *  commanded power hits zero the motors are actively shorted and the
+         *  wheels stop dead instead of coasting on momentum (no float glide).
+         *  False = FLOAT, Pedro's Mecanum constructor default: free coasting.
+         *  Applies whenever this Moveatron2k instance commands the drivetrain,
+         *  including the end of a {@link #goTo} move (the bot then halts inside
+         *  tolerance instead of drifting past it on the brake). */
+        public boolean manualDriveBrake = true;
+
         public Config() {}
 
         /** Convenience builder for one-off overrides. */
@@ -159,6 +169,10 @@ public class Moveatron2k {
         // Reuse the exact localizer + drivetrain setups from the Pedro configuration.
         this.localizer = new PinpointLocalizer(hardwareMap, Constants.localizerConfig);
         this.drivetrain = new Mecanum(hardwareMap, Constants.drivetrainConfig);
+        // Pedro's Mecanum constructor force-sets FLOAT; honor the user toggle.
+        this.drivetrain.setZeroPowerBehavior(config.manualDriveBrake
+                ? DcMotor.ZeroPowerBehavior.BRAKE
+                : DcMotor.ZeroPowerBehavior.FLOAT);
         this.config = config;
         // (0, 0, 0) of the Moveatron2k frame is where the bot sits right now (OpMode init),
         // NOT whatever stale origin the Pinpoint has accumulated since power-on.

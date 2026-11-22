@@ -75,6 +75,26 @@ public final class Intersections {
                 || intersects(line, left) || intersects(line, right);
     }
 
+    // A circle is contained in a box when every point of the circle is inside the
+    // box, i.e. when the circle touches the box boundary it counts as contained.
+    public static boolean contains(Box box, Circle circle) {
+        double radius = circle.getRadius();
+        Point center = circle.getCenter();
+        return center.getX() - radius >= box.getMin().getX()
+                && center.getX() + radius <= box.getMax().getX()
+                && center.getY() - radius >= box.getMin().getY()
+                && center.getY() + radius <= box.getMax().getY();
+    }
+
+    // Same convention: touching the outer circle's boundary counts as contained.
+    public static boolean contains(Circle outer, Circle inner) {
+        if (inner.getRadius() > outer.getRadius()) {
+            return false;
+        }
+        double reach = outer.getRadius() - inner.getRadius();
+        return outer.getCenter().distanceSquaredTo(inner.getCenter()) <= reach * reach;
+    }
+
     public static boolean intersects(Box box, Line line) {
         return intersects(line, box);
     }

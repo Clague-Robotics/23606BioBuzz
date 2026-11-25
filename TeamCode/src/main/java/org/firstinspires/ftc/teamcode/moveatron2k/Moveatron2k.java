@@ -8,6 +8,7 @@ import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 /**
@@ -98,6 +99,14 @@ public class Moveatron2k {
          *  0.2 is ~2.5x that. If the bot now oscillates around the target,
          *  split the difference (~0.15). */
         public double headingCreepFloor = 0.2;
+
+        /** Focus-point manual drive ({@link #manual(MoveType, double, double, Position)})
+         *  only: inside this aim error (deg) the auto-aim turn rests at zero
+         *  instead of creeping, so the bot can stand aimed without dithering;
+         *  it re-engages as soon as the bearing drifts past the band (also
+         *  while translating). Tighter than {@link #headingToleranceDeg}:
+         *  aim is kept visual, not an arrival check. */
+        public double aimToleranceDeg = 2.0;
 
         /** Inverts the turn channel. Set true when the bot physically rotates
          *  away from its target (turn axis mirrored relative to the Pinpoint's
@@ -261,8 +270,9 @@ public class Moveatron2k {
      * @param forward  forward power
      * @param strafe   left power
      * @param turn     + = CCW as seen from above (physical convention — the
-     *                 closed loop's {@link Config#reverseRotation} compensation
-     *                 is goTo's business, not the driver's)
+     *                 {@link Config#reverseRotation} compensation belongs to
+     *                 the closed-loop turns ({@link #goTo} and the focus-point
+     *                 aim), not the driver)
      */
     public void manual(MoveType moveType, double forward, double strafe, double turn) {
         if (busy) {
@@ -282,6 +292,66 @@ public class Moveatron2k {
             case BotCentric:
             default:
                 drivetrain.applyDrive(new DrivePowers(forward, strafe, turn));
+                break;
+        }
+    }
+
+    /**
+     * Manual drive with auto-aim: translation from the sticks, the SPIN owned
+     * by a closed loop that keeps the bot FACING the focus point (a camera
+     * operator walking while keeping the camera on one person).
+     * {@link MoveType#FieldCentric}: the translation axes are the Moveatron2k
+     * frame (world: +forward = the init/setPosition x-axis, +strafe = its
+     * left), rotated into the body frame against the bot's CURRENT heading
+     * (fresh Pinpoint read) each call, so pushing forward always drives toward
+     * the frame's x-axis no matter which way the bot has since rotated.
+     * {@link MoveType#BotCentric}: body-frame axes, translation only — a focus
+     * lock is a world-point concept, so that combination applies no turn.
+     *
+     * The aim uses the same shaped turn channel as the {@link #goTo} loop
+     * (capped, quadratic decay to the creep floor, {@link Config#reverseRotation}
+     * honored) but never "finishes": within {@link Config#aimToleranceDeg} of
+     * facing the point the turn rests at zero — translation may then swing the
+     * bearing past the band and the loop re-engages — so the bot can stand
+     * aimed without dithering. Standing exactly ON the focus point makes the
+     * bearing read as the frame's x-axis.
+     *
+     * Does NOTHING while the bot is busy with a {@link #goTo} move
+     * ({@link #isBusy()} true), like the 4-arg drive.
+     *
+     * @param moveType which frame the translation axes are expressed in
+     * @param forward  forward power
+     * @param strafe   left power
+     * @param focus    the Moveatron2k-frame point (mm) the bot keeps facing
+     */
+    public void manual(MoveType moveType, double forward, double strafe, Position focus, Telemetry telemetry) {
+        if (busy) {
+            return;
+        }
+
+        switch (moveType) {
+            case FieldCentric: {
+                Position here = currentPose();
+                double headingRad = Math.toRadians(here.headingDeg);
+                double cos = Math.cos(headingRad);
+                double sin = Math.sin(headingRad);
+                double bodyForward = forward * cos + strafe * sin;
+                double bodyStrafe = -forward * sin + strafe * cos;
+                // Bearing from the bot's spot to the focus point minus the current
+                // heading, CCW-positive; rest inside the aim band, the shared
+                // closed-loop turn command outside it.
+                double aimError = Angle.normalizeSigned(
+                        Math.atan2(focus.yMm - here.yMm, focus.xMm - here.xMm) - headingRad);
+                double turn = Math.abs(aimError) <= Math.toRadians(config.aimToleranceDeg)
+                        ? 0.0
+                        : turnCommand(aimError);
+                drivetrain.applyDrive(new DrivePowers(bodyForward, bodyStrafe, turn));
+                break;
+            }
+            case BotCentric:
+            default:
+                // Translation only, commanded every loop so no stale power lingers.
+                drivetrain.applyDrive(new DrivePowers(forward, strafe, 0));
                 break;
         }
     }
@@ -332,15 +402,7 @@ public class Moveatron2k {
         // gets slower the closer it is, so it can't build the momentum that
         // carried it across the ±180° wrap seam and pinned the ±170° sway.
         // Turn reversals near the seam stay equally weak.
-        double headingFullRad = Math.toRadians(config.fullPowerHeadingDeg);
-        double turnScale = Math.min(1.0, Math.abs(headingError) / headingFullRad);
-        double turn = Math.signum(headingError) * (config.headingCreepFloor
-                + (config.maxHeadingPower - config.headingCreepFloor) * turnScale * turnScale);
-        if (config.reverseRotation) {
-            turn = -turn;
-        }
-
-        drivetrain.applyDrive(new DrivePowers(forward, strafe, turn));
+        drivetrain.applyDrive(new DrivePowers(forward, strafe, turnCommand(headingError)));
     }
 
     /** False once the last tick ended within tolerance (or before the first goTo). */
@@ -356,6 +418,20 @@ public class Moveatron2k {
     /** Heading remaining to the target, deg CCW-positive (last tick). */
     public double headingErrorDeg() {
         return Math.toDegrees(headingError);
+    }
+
+    /** The closed-loop turn-channel power for a CCW-positive heading error
+     *  (radians): full power at {@link Config#fullPowerHeadingDeg}, quadratic
+     *  decay to the creep floor near zero, then the
+     *  {@link Config#reverseRotation} flip into the drivetrain's turn channel.
+     *  Shared by the {@link #goTo} loop ({@link #tick}) and the focus-point
+     *  aim in {@link #manual(MoveType, double, double, Position)}. */
+    private double turnCommand(double headingErrorRad) {
+        double headingFullRad = Math.toRadians(config.fullPowerHeadingDeg);
+        double turnScale = Math.min(1.0, Math.abs(headingErrorRad) / headingFullRad);
+        double turn = Math.signum(headingErrorRad) * (config.headingCreepFloor
+                + (config.maxHeadingPower - config.headingCreepFloor) * turnScale * turnScale);
+        return config.reverseRotation ? -turn : turn;
     }
 
     /**
